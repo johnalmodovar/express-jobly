@@ -67,6 +67,24 @@ class Company {
     return companiesRes.rows;
   }
 
+  /** Find all companies matching the optional filtering criteria.
+   * nameLike - filter by company name that matches the input (case-insensitive)
+   *
+   */
+
+  static async findFiltered(filters) {
+    const { nameLike, minEmployees, maxEmployees } = filters;
+
+    const filteredRes = await db.query(`
+        SELECT handle,
+               name,
+               description,
+               num_employees AS "numEmployees",
+               logo_url      AS "logoUrl"
+        FROM companies
+        WHERE `)
+  }
+
   /** Given a company handle, return data about company.
    *
    * Returns { handle, name, description, numEmployees, logoUrl, jobs }
