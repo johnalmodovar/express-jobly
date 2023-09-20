@@ -95,6 +95,115 @@ describe("GET /companies", function () {
           ],
     });
   });
+
+  test("with nameLike filter", async function () {
+    const resp = await request(app)
+        .get("/companies")
+        .query({ nameLike: "c1" });
+
+    expect(resp.body).toEqual({
+      companies: [{
+        handle: "c1",
+        name: "C1",
+        description: "Desc1",
+        numEmployees: 1,
+        logoUrl: "http://c1.img",
+      }]
+    });
+  });
+
+  test("with minEmployees filter", async function () {
+    const resp = await request(app)
+        .get("/companies")
+        .query({ minEmployees: 2 });
+
+    expect(resp.body).toEqual({
+      companies: [{
+        handle: "c2",
+        name: "C2",
+        description: "Desc2",
+        numEmployees: 2,
+        logoUrl: "http://c2.img",
+      },
+      {
+        handle: "c3",
+        name: "C3",
+        description: "Desc3",
+        numEmployees: 3,
+        logoUrl: "http://c3.img",
+      }]
+    });
+  });
+
+  test("with minEmployees having an invalid integer", async function () {
+    const resp = await request(app)
+        .get("/companies")
+        .query({ minEmployees: "hi" });
+
+    expect(resp.status).toEqual(400);
+  });
+
+  test("with maxEmployees filter", async function () {
+    const resp = await request(app)
+        .get("/companies")
+        .query({ maxEmployees: 1 });
+
+    expect(resp.body).toEqual({
+      companies: [{
+        handle: "c1",
+        name: "C1",
+        description: "Desc1",
+        numEmployees: 1,
+        logoUrl: "http://c1.img",
+      }]
+    });
+  });
+
+  test("with maxEmployees having an invalid integer", async function () {
+    const resp = await request(app)
+        .get("/companies")
+        .query({ maxEmployees: "hello" });
+
+    expect(resp.status).toEqual(400);
+  });
+
+  test("when minEmployees greater than maxEmployee", async function () {
+    const resp = await request(app)
+        .get("/companies")
+        .query({
+            minEmployees: 3,
+            maxEmployees: 1
+        });
+
+    expect(resp.status).toEqual(400);
+    expect(resp.body.error.message).toEqual("minEmployees cannot be greater than maxEmployees");
+  });
+
+  test("having multiple filter criteria", async function () {
+    const resp = await request(app)
+        .get("/companies")
+        .query({
+            nameLike: "c",
+            maxEmployees: 2
+        });
+
+    expect(resp.body).toEqual({
+      companies: [{
+        handle: "c1",
+        name: "C1",
+        description: "Desc1",
+        numEmployees: 1,
+        logoUrl: "http://c1.img",
+      },
+      {
+        handle: "c2",
+        name: "C2",
+        description: "Desc2",
+        numEmployees: 2,
+        logoUrl: "http://c2.img",
+      }]
+    });
+  });
 });
 
 /************************************** GET /companies/:handle */

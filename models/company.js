@@ -73,11 +73,9 @@ class Company {
    */
 
   static async findFiltered(filters) {
-
     const { nameLike, minEmployees, maxEmployees } = filters;
-
     const { whereString, values } = sqlForFilter(filters);
-
+    console.log("hits the model statc method", minEmployees)
     const queryString =`
         SELECT handle,
                name,
@@ -88,10 +86,7 @@ class Company {
         WHERE ${whereString}
         ORDER BY name`;
 
-
-
     const filteredRes = await db.query(queryString, [...values]);
-
 
     return filteredRes.rows;
   }

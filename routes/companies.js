@@ -9,6 +9,7 @@ const { BadRequestError } = require("../expressError");
 const { ensureLoggedIn } = require("../middleware/auth");
 const Company = require("../models/company");
 
+const companyFilterSchema = require("../schemas/companyFilter.json");
 const companyNewSchema = require("../schemas/companyNew.json");
 const companyUpdateSchema = require("../schemas/companyUpdate.json");
 
@@ -51,9 +52,34 @@ router.post("/", ensureLoggedIn, async function (req, res, next) {
  */
 
 router.get("/", async function (req, res, next) {
+  let query = req.query;
+
+  if (query.minEmployees) {
+    query.minEmployees = Number(query.minEmployees);
+  }
+
+  if (query.maxEmployees) {
+    query.maxEmployees = Number(query.maxEmployees);
+  }
+
+  const validator = jsonschema.validate(
+    query,
+    companyFilterSchema,
+    {required: true}
+  );
+
+  if (!validator.valid) {
+    console.log("What is req.query", req.query)
+    const errs = validator.errors.map(e => e.stack);
+    throw new BadRequestError(errs);
+  }
+
   const { nameLike, minEmployees, maxEmployees } = req.query;
+
   let companies;
+
   if (nameLike || minEmployees || maxEmployees) {
+    console.log("hits route, ", minEmployees)
    companies = await Company.findFiltered({ nameLike, minEmployees, maxEmployees });
   } else {
    companies = await Company.findAll();
@@ -97,6 +123,7 @@ router.patch("/:handle", ensureLoggedIn, async function (req, res, next) {
     throw new BadRequestError(errs);
   }
 
+  console.log("What's in body, ", req.body)
   const company = await Company.update(req.params.handle, req.body);
   return res.json({ company });
 });

@@ -46,14 +46,14 @@ function sqlForFilter(termsToFilter) {
   const whereStringArray = [];
   let index = 1
   const { nameLike, minEmployees, maxEmployees } = termsToFilter;
-
+  console.log("inside helper function, ", minEmployees)
   if (minEmployees > maxEmployees) {
     throw new BadRequestError(
               "minEmployees cannot be greater than maxEmployees");
   }
 
   if (nameLike) {
-    whereStringArray.push(`name ILIKE '%' || $${index} || '%' `);
+    whereStringArray.push(`name ILIKE '%' || $${index} || '%'`);
     index++;
   }
   if (minEmployees) {
