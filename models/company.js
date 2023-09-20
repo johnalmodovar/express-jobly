@@ -2,7 +2,7 @@
 
 const db = require("../db");
 const { BadRequestError, NotFoundError } = require("../expressError");
-const { sqlForPartialUpdate } = require("../helpers/sql");
+const { sqlForPartialUpdate, sqlForFilter } = require("../helpers/sql");
 
 /** Related functions for companies. */
 
@@ -73,16 +73,27 @@ class Company {
    */
 
   static async findFiltered(filters) {
+
     const { nameLike, minEmployees, maxEmployees } = filters;
 
-    const filteredRes = await db.query(`
+    const { whereString, values } = sqlForFilter(filters);
+
+    const queryString =`
         SELECT handle,
                name,
                description,
                num_employees AS "numEmployees",
                logo_url      AS "logoUrl"
         FROM companies
-        WHERE `)
+        WHERE ${whereString}
+        ORDER BY name`;
+
+
+
+    const filteredRes = await db.query(queryString, [...values]);
+
+
+    return filteredRes.rows;
   }
 
   /** Given a company handle, return data about company.
