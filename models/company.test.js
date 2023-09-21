@@ -86,6 +86,119 @@ describe("findAll", function () {
     ]);
   });
 });
+/************************************** filerCompanies */
+describe("filterCompanies", function () {
+  test("should work with provided data", function () {
+    const sqlFilter = Company.filterCompanies({
+      nameLike: "and",
+      minEmployees: 100,
+      maxEmployees: 500,
+    });
+
+    expect(sqlFilter).toEqual({
+      whereString:
+        `name ILIKE '%' || $1 || '%'`
+        + ` AND num_employees >= $2`
+        + ` AND num_employees <= $3`,
+      values: ["and", 100, 500],
+    });
+  });
+
+  test("only some criteria are inputted", function () {
+    const sqlFilter = Company.filterCompanies({
+      nameLike: "and",
+      minEmployees: 100,
+    });
+
+    expect(sqlFilter).toEqual({
+      whereString:
+        `name ILIKE '%' || $1 || '%'`
+        + ` AND num_employees >= $2`,
+      values: ["and", 100],
+    });
+  });
+
+});
+
+
+/************************************** findFiltered */
+describe("findfiltered", function () {
+  test("works with nameLike filter", async function () {
+    const mockQuery1 = {nameLike: "c1"}
+    let companies = await Company.findFiltered(mockQuery1);
+    expect(companies).toEqual([{
+      handle: "c1",
+      name: "C1",
+      description: "Desc1",
+      numEmployees: 1,
+      logoUrl: "http://c1.img",
+    }]);
+  });
+
+  test("works with minEmployees filter", async function () {
+    const mockQuery2 = {minEmployees: 2}
+    let companies = await Company.findFiltered(mockQuery2);
+    expect(companies).toEqual([{
+      handle: "c2",
+      name: "C2",
+      description: "Desc2",
+      numEmployees: 2,
+      logoUrl: "http://c2.img",
+    },
+    {
+      handle: "c3",
+      name: "C3",
+      description: "Desc3",
+      numEmployees: 3,
+      logoUrl: "http://c3.img",
+    }]);
+  });
+
+  test("works with maxEmployees filter", async function () {
+    const mockQuery3 = {maxEmployees: 2}
+    let companies = await Company.findFiltered(mockQuery3);
+    expect(companies).toEqual([{
+      handle: "c1",
+      name: "C1",
+      description: "Desc1",
+      numEmployees: 1,
+      logoUrl: "http://c1.img",
+    },
+    {
+      handle: "c2",
+      name: "C2",
+      description: "Desc2",
+      numEmployees: 2,
+      logoUrl: "http://c2.img",
+    }]);
+  });
+
+  test("works with multiple filters", async function () {
+    const mockQuery4 = {nameLike: "c", maxEmployees: 2}
+    let companies = await Company.findFiltered(mockQuery4);
+    expect(companies).toEqual([{
+      handle: "c1",
+      name: "C1",
+      description: "Desc1",
+      numEmployees: 1,
+      logoUrl: "http://c1.img",
+    },
+    {
+      handle: "c2",
+      name: "C2",
+      description: "Desc2",
+      numEmployees: 2,
+      logoUrl: "http://c2.img",
+    }]);
+  });
+
+  test("returns empty list if no companies match", async function () {
+    const mockQuery5 = {minEmployees: 100}
+    let companies = await Company.findFiltered(mockQuery5);
+    expect(companies).toEqual([]);
+  });
+
+});
 
 /************************************** get */
 

@@ -2,7 +2,7 @@
 
 const db = require("../db");
 const { BadRequestError, NotFoundError } = require("../expressError");
-const { sqlForPartialUpdate, sqlForFilter } = require("../helpers/sql");
+const { sqlForPartialUpdate } = require("../helpers/sql");
 
 /** Related functions for companies. */
 
@@ -67,14 +67,52 @@ class Company {
     return companiesRes.rows;
   }
 
+  /** Builds a query string and array of values for filtering company results
+ * Takes in: {nameLike: 'and', minEmployees: 100, maxEmployees: 500}
+ * Returns: { whereString: `name ILIKE '%' || $1 || '%'
+ *                          AND num_employees >= $2
+ *                          AND num_employees <= $3`,
+ *             values: ['and', 100, 500] }
+ */
+static filterCompanies(termsToFilter) {
+
+  const whereStringArray = [];
+  let index = 1
+  const { nameLike, minEmployees, maxEmployees } = termsToFilter;
+
+  if (minEmployees > maxEmployees) {
+    throw new BadRequestError(
+              "minEmployees cannot be greater than maxEmployees");
+  }
+  if (nameLike) {
+    whereStringArray.push(`name ILIKE '%' || $${index} || '%'`);
+    index++;
+  }
+  if (minEmployees) {
+    whereStringArray.push(`num_employees >= $${index}`);
+    index++;
+  }
+  if (maxEmployees) {
+    whereStringArray.push(`num_employees <= $${index}`);
+    index++;
+  }
+
+  return {
+    whereString: whereStringArray.join(' AND '),
+    values: Object.values(termsToFilter).filter(item => item !== undefined)
+
+  };
+}
+
   /** Find all companies matching the optional filtering criteria.
    * nameLike - filter by company name that matches the input (case-insensitive)
    *
    */
 
+  //TODO: Try to condense this and findAll into one function
   static async findFiltered(filters) {
     const { nameLike, minEmployees, maxEmployees } = filters;
-    const { whereString, values } = sqlForFilter(filters);
+    const { whereString, values } = Company.filterCompanies(filters);
     console.log("hits the model statc method", minEmployees)
     const queryString =`
         SELECT handle,

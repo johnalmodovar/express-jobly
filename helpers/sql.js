@@ -34,45 +34,8 @@ function sqlForPartialUpdate(dataToUpdate, jsToSql) {
 }
 
 
-/** Builds a query string and array of values for filtering company results
- * Takes in: {nameLike: 'and', minEmployees: 100, maxEmployees: 500}
- * Returns: { whereString: `name ILIKE '%' || $1 || '%'
- *                          AND num_employees >= $2
- *                          AND num_employees <= $3`,
- *             values: ['and', 100, 500] }
- */
-function sqlForFilter(termsToFilter) {
 
-  const whereStringArray = [];
-  let index = 1
-  const { nameLike, minEmployees, maxEmployees } = termsToFilter;
-  console.log("inside helper function, ", minEmployees)
-  if (minEmployees > maxEmployees) {
-    throw new BadRequestError(
-              "minEmployees cannot be greater than maxEmployees");
-  }
 
-  if (nameLike) {
-    whereStringArray.push(`name ILIKE '%' || $${index} || '%'`);
-    index++;
-  }
-  if (minEmployees) {
-    whereStringArray.push(`num_employees >= $${index}`);
-    index++;
-  }
-  if (maxEmployees) {
-    whereStringArray.push(`num_employees <= $${index}`);
-    index++;
-  }
-  //const values = Object.values(termsToFilter);
-  return {
-    whereString: whereStringArray.join(' AND '),
-    values: Object.values(termsToFilter).filter(item => item !== undefined)
-
-  };
-
-}
-
-module.exports = { sqlForPartialUpdate, sqlForFilter };
+module.exports = { sqlForPartialUpdate };
 
 

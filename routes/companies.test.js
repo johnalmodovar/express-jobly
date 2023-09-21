@@ -11,6 +11,7 @@ const {
   commonAfterEach,
   commonAfterAll,
   u1Token,
+  a1Token,
 } = require("./_testCommon");
 
 beforeAll(commonBeforeAll);
@@ -29,14 +30,27 @@ describe("POST /companies", function () {
     numEmployees: 10,
   };
 
-  test("ok for users", async function () {
+  test("ok for admins", async function () {
+    const resp = await request(app)
+        .post("/companies")
+        .send(newCompany)
+        .set("authorization", `Bearer ${a1Token}`);
+    expect(resp.statusCode).toEqual(201);
+    expect(resp.body).toEqual({
+      company: newCompany,
+    });
+  });
+
+  test("bad for non-admin users", async function () {
     const resp = await request(app)
         .post("/companies")
         .send(newCompany)
         .set("authorization", `Bearer ${u1Token}`);
-    expect(resp.statusCode).toEqual(201);
+    expect(resp.statusCode).toEqual(401);
     expect(resp.body).toEqual({
-      company: newCompany,
+      error: {
+         message: "Unauthorized",
+         status: 401}
     });
   });
 
@@ -47,7 +61,7 @@ describe("POST /companies", function () {
           handle: "new",
           numEmployees: 10,
         })
-        .set("authorization", `Bearer ${u1Token}`);
+        .set("authorization", `Bearer ${a1Token}`);
     expect(resp.statusCode).toEqual(400);
   });
 
@@ -58,7 +72,7 @@ describe("POST /companies", function () {
           ...newCompany,
           logoUrl: "not-a-url",
         })
-        .set("authorization", `Bearer ${u1Token}`);
+        .set("authorization", `Bearer ${a1Token}`);
     expect(resp.statusCode).toEqual(400);
   });
 });
@@ -175,8 +189,10 @@ describe("GET /companies", function () {
             maxEmployees: 1
         });
 
+        //TODO: test resp.body as a whole
     expect(resp.status).toEqual(400);
-    expect(resp.body.error.message).toEqual("minEmployees cannot be greater than maxEmployees");
+    expect(resp.body.error.message)
+                  .toEqual("minEmployees cannot be greater than maxEmployees");
   });
 
   test("having multiple filter criteria", async function () {
@@ -244,13 +260,13 @@ describe("GET /companies/:handle", function () {
 /************************************** PATCH /companies/:handle */
 
 describe("PATCH /companies/:handle", function () {
-  test("works for users", async function () {
+  test("works for admins", async function () {
     const resp = await request(app)
         .patch(`/companies/c1`)
         .send({
           name: "C1-new",
         })
-        .set("authorization", `Bearer ${u1Token}`);
+        .set("authorization", `Bearer ${a1Token}`);
     expect(resp.body).toEqual({
       company: {
         handle: "c1",
@@ -259,6 +275,22 @@ describe("PATCH /companies/:handle", function () {
         numEmployees: 1,
         logoUrl: "http://c1.img",
       },
+    });
+  });
+
+  test("unauth for non-admin users", async function () {
+    const resp = await request(app)
+        .patch(`/companies/c1`)
+        .send({
+          name: "C1-new",
+        })
+        .set("authorization", `Bearer ${u1Token}`);
+
+    expect(resp.statusCode).toEqual(401);
+    expect(resp.body).toEqual({
+      error: {
+         message: "Unauthorized",
+         status: 401}
     });
   });
 
@@ -277,7 +309,7 @@ describe("PATCH /companies/:handle", function () {
         .send({
           name: "new nope",
         })
-        .set("authorization", `Bearer ${u1Token}`);
+        .set("authorization", `Bearer ${a1Token}`);
     expect(resp.statusCode).toEqual(404);
   });
 
@@ -287,7 +319,7 @@ describe("PATCH /companies/:handle", function () {
         .send({
           handle: "c1-new",
         })
-        .set("authorization", `Bearer ${u1Token}`);
+        .set("authorization", `Bearer ${a1Token}`);
     expect(resp.statusCode).toEqual(400);
   });
 
@@ -297,7 +329,7 @@ describe("PATCH /companies/:handle", function () {
         .send({
           logoUrl: "not-a-url",
         })
-        .set("authorization", `Bearer ${u1Token}`);
+        .set("authorization", `Bearer ${a1Token}`);
     expect(resp.statusCode).toEqual(400);
   });
 });
