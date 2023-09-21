@@ -73,19 +73,22 @@ class Job {
       const { title, minSalary, hasEquity } = filters;
       const { whereString, values } = Job.filterJobs(filters);
 
-      const queryString = `
+      if (Object.keys(filters).length > 1 && !(hasEquity)){
+        const queryString = `
         SELECT id,
                title,
                salary,
                equity,
                company_handle AS "companyHandle"
         FROM jobs
-        WHERE ${whereString}
+        ${whereString}
         ORDER BY title`;
 
-      const filteredRes = await db.query(queryString, [...values]);
+        const filteredRes = await db.query(queryString, [...values]);
 
-      return filteredRes.rows;
+        return filteredRes.rows;
+      }
+
     }
 
     const jobRes = await db.query(
@@ -114,6 +117,7 @@ class Job {
     let idx = 1;
     const { title, minSalary, hasEquity } = filters;
 
+
     if (title) {
       whereStringArray.push(`title ILIKE '%' || $${idx} || '%'`);
       idx++;
@@ -123,13 +127,16 @@ class Job {
       idx++;
     }
     if (hasEquity) {
-      whereStringArray.push(`equity > 0`);
+      whereStringArray.push(`equity != 0`);
       idx++;
     }
 
+    let values = [title, minSalary];
+    let whereString = whereStringArray.join(` AND `);
+
     return {
-      whereString: whereStringArray.join(` AND `),
-      values: Object.values(filters).filter(item => item !== undefined)
+      whereString: "WHERE " + whereString,
+      values: values.filter(item => item !== undefined)
     };
   }
 

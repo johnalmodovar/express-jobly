@@ -136,7 +136,7 @@ describe("findAll", function () {
   test("works with hasEquity filter that's false", async function () {
     const mockQuery3 = { hasEquity: false };
     let jobs = await Job.findAll(mockQuery3);
-
+    console.log("*** What is Jobs ***", jobs)
     expect(jobs).toEqual([
       {
         id: expect.any(Number),
