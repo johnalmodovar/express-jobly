@@ -74,18 +74,19 @@ router.get("/", async function (req, res, next) {
     throw new BadRequestError(errs);
   }
 
-  const { nameLike, minEmployees, maxEmployees } = req.query;
+  const companies = await Company.findAll(req.query);
 
-  let companies;
+  // const { nameLike, minEmployees, maxEmployees } = req.query;
 
-  //TODO: refactor findFilterd and findAll into one func
+  // let companies;
 
-  if (nameLike || minEmployees || maxEmployees) {
-    console.log("hits route, ", minEmployees)
-   companies = await Company.findFiltered({ nameLike, minEmployees, maxEmployees });
-  } else {
-   companies = await Company.findAll();
-  }
+  // //TODO: refactor findFilterd and findAll into one func
+
+  // if (nameLike || minEmployees || maxEmployees) {
+  //  companies = await Company.findFiltered({ nameLike, minEmployees, maxEmployees });
+  // } else {
+  //  companies = await Company.findAll();
+  // }
 
   return res.json({ companies });
 });

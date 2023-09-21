@@ -52,10 +52,37 @@ class Company {
 
   /** Find all companies.
    *
+   * Has OPTIONAL filters: nameLike, minEmployees, maxEmployees.
+   * - nameLike - filter by company name that matches input (case-insensitive).
+   * - minEmployees - filter to companies that have at least that num amount of
+   *                  employees.
+   * - maxEmployees - filter to companies that have no more than that num of
+   *                  employees.
+   *
+   * if minEmployees is greater than maxEmployees, responds with 400 error.
+   *
    * Returns [{ handle, name, description, numEmployees, logoUrl }, ...]
    * */
 
-  static async findAll() {
+  static async findAll(filters) {
+    if (filters) {
+      const { nameLike, minEmployees, maxEmployees } = filters;
+      const { whereString, values } = Company.filterCompanies(filters);
+      const queryString =`
+        SELECT handle,
+               name,
+               description,
+               num_employees AS "numEmployees",
+               logo_url      AS "logoUrl"
+        FROM companies
+        WHERE ${whereString}
+        ORDER BY name`;
+
+      const filteredRes = await db.query(queryString, [...values]);
+
+      return filteredRes.rows;
+    }
+
     const companiesRes = await db.query(`
         SELECT handle,
                name,
@@ -64,6 +91,7 @@ class Company {
                logo_url      AS "logoUrl"
         FROM companies
         ORDER BY name`);
+
     return companiesRes.rows;
   }
 
@@ -74,11 +102,11 @@ class Company {
  *                          AND num_employees <= $3`,
  *             values: ['and', 100, 500] }
  */
-static filterCompanies(termsToFilter) {
 
+static filterCompanies(filters) {
   const whereStringArray = [];
   let index = 1
-  const { nameLike, minEmployees, maxEmployees } = termsToFilter;
+  const { nameLike, minEmployees, maxEmployees } = filters;
 
   if (minEmployees > maxEmployees) {
     throw new BadRequestError(
@@ -99,35 +127,9 @@ static filterCompanies(termsToFilter) {
 
   return {
     whereString: whereStringArray.join(' AND '),
-    values: Object.values(termsToFilter).filter(item => item !== undefined)
-
+    values: Object.values(filters).filter(item => item !== undefined)
   };
 }
-
-  /** Find all companies matching the optional filtering criteria.
-   * nameLike - filter by company name that matches the input (case-insensitive)
-   *
-   */
-
-  //TODO: Try to condense this and findAll into one function
-  static async findFiltered(filters) {
-    const { nameLike, minEmployees, maxEmployees } = filters;
-    const { whereString, values } = Company.filterCompanies(filters);
-    console.log("hits the model statc method", minEmployees)
-    const queryString =`
-        SELECT handle,
-               name,
-               description,
-               num_employees AS "numEmployees",
-               logo_url      AS "logoUrl"
-        FROM companies
-        WHERE ${whereString}
-        ORDER BY name`;
-
-    const filteredRes = await db.query(queryString, [...values]);
-
-    return filteredRes.rows;
-  }
 
   /** Given a company handle, return data about company.
    *
