@@ -40,11 +40,18 @@ function ensureLoggedIn(req, res, next) {
   throw new UnauthorizedError();
 }
 
+/** Middleware to check whether a user is an admin. If not, raises
+ * Unauthorized.
+ */
 function ensureAdmin(req, res, next) {
+  //TODO: Also check for username here
   if (res.locals.user?.isAdmin) return next();
   throw new UnauthorizedError();
 }
 
+/** Middleware to check whether a user is an admin or is attempting to
+ * access their own page. If neither is true, raises Unauthorized.
+ */
 function ensureUserOrAdmin(req, res, next) {
   if (res.locals.user?.username === req.params.username ||
       res.locals.user?.isAdmin) {
