@@ -216,8 +216,17 @@ describe("filterJobs", function () {
 /****************************** get ******************************************/
 //FIXME: refactor job.get =>
 describe("get", function () {
+
   test("works", async function () {
-    let job = await Job.get(1);
+    const sampleRes = await db.query( `
+          SELECT id
+          FROM jobs
+          WHERE title = 'j1'
+          `);
+
+    const sampleId = sampleRes.rows[0].id;
+
+    let job = await Job.get(sampleId);
 
     expect(job).toEqual(
       {
@@ -232,7 +241,7 @@ describe("get", function () {
 
   test("not found if no such job", async function () {
     try {
-      await Job.get("doesn't exist");
+      await Job.get(-1);
       throw new Error("fail test, you shouldn't get here");
     } catch (err) {
       expect(err instanceof NotFoundError).toBeTruthy();
