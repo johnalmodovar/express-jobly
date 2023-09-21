@@ -11,7 +11,7 @@ class Job {
  *
  * data should be { title, salary, equity, company_handle }.
  *
- * returns { title, salary, equity, company_handle }.
+ * returns { id, title, salary, equity, company_handle }.
  *
  * Throws BadRequestError if job is already in database.
  */
@@ -35,6 +35,7 @@ class Job {
                                   company_handle)
                 VALUES ($1, $2, $3, $4)
                 RETURNING
+                    id,
                     title,
                     salary,
                     equity,
@@ -42,6 +43,7 @@ class Job {
                 [title, salary, equity, companyHandle]
     );
     const job = result.rows[0];
+
 
     return job;
   }
@@ -54,7 +56,78 @@ class Job {
    * - hasEquity: if true, filter jobs that provide non-zero amount of equity.
    *              if false (or not included), list all jobs regardless equity.
    *
-   * Returns [{ title, salary, equity, companyHandle }]
+   * Returns [{ id, title, salary, equity, companyHandle }]
+   */
+
+  static async findAll(filters) {
+    if (filters) {
+      const { title, minSalary, hasEquity } = filters;
+      const { whereString, values } = Job.filterJobs(filters);
+
+      const queryString = `
+        SELECT id,
+               title,
+               salary,
+               equity,
+               company_handle AS "companyHandle",
+        FROM jobs
+        WHERE ${whereString}
+        ORDER BY title`;
+
+      const filteredRes = await db.query(queryString, [...values]);
+
+      return filteredRes.rows;
+    }
+
+    const jobRes = await db.query(
+      `SELECT id,
+              title,
+              salary,
+              equity,
+              company_handle AS "companyHandle"
+       FROM jobs
+       ORDER BY title`
+    );
+
+    return jobRes.rows;
+  }
+
+  /** Builds a query string and array of values for filtering job results
+ * Takes in: {title: 'and', minSalary: 100, hasEquity: true}
+ * Returns: { whereString: `title ILIKE '%' || $1 || '%'
+ *                          AND salary >= $2
+ *                          AND equity > 0`,
+ *             values: ['and', 100] }
+ */
+
+  static filterJobs(filters) {
+    const whereStringArray = [];
+    let idx = 1;
+    const { title, minSalary, hasEquity } = filters;
+
+    if (title) {
+      whereStringArray.push(`title ILIKE '%' || $${idx} || '%'`);
+      idx++;
+    }
+    if (minSalary) {
+      whereStringArray.push(`salary >= $${idx}`);
+      idx++;
+    }
+    if (hasEquity) {
+      whereStringArray.push(`equity > 0`);
+      idx++;
+    }
+
+    return {
+      whereString: whereStringArray.join(` AND `),
+      values: Object.values(filters).filter(item => item !== undefined)
+    };
+  }
+
+  /** Given a job id, return data about job.
+   *
+   * Returns { id, title, salary, equity, companyHandle }
+   *
    */
 }
 

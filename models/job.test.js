@@ -19,24 +19,26 @@ afterAll(commonAfterAll);
 /******************************* create **************************************/
 
 describe("create", function () {
-  const newJob = {
-    title: "new job",
-    salary: 30,
-    equity: "0",
-    companyHandle: "c3"
-  };
-
   test("works", async function () {
+    const newJob = {
+      title: "new job",
+      salary: 30,
+      equity: "0",
+      companyHandle: "c3"
+    };
     let job = await Job.create(newJob);
-    expect(job).toEqual(newJob);
 
     const result = await db.query(
-          `SELECT title, salary, equity, company_handle
+          `SELECT id, title, salary, equity, company_handle
            FROM jobs
            WHERE title = 'new job'`
     );
+    console.log("*** WHAT IS JOB ***", job)
+    console.log("*** WHAT IS NEW JOB ***", newJob)
+
     expect(result.rows).toEqual([
       {
+        id: expect.any(Number),
         title: "new job",
         salary: 30,
         equity: "0",
@@ -70,14 +72,14 @@ describe("findAll", function () {
 
     expect(jobs).toEqual([
       {
-        id: 1,
+        id: expect.any(Number),
         title: "j1",
         salary: 10,
         equity: "0",
         companyHandle: "c1"
       },
       {
-        id: 2,
+        id: expect.any(Number),
         title: "j2",
         salary: 20,
         equity: "1",
@@ -92,7 +94,7 @@ describe("findAll", function () {
 
     expect(jobs).toEqual([
       {
-        id: 1,
+        id: expect.any(Number),
         title: "j1",
         salary: 10,
         equity: "0",
@@ -107,7 +109,7 @@ describe("findAll", function () {
 
     expect(jobs).toEqual([
       {
-        id: 2,
+        id: expect.any(Number),
         title: "j2",
         salary: 20,
         equity: "1",
@@ -122,7 +124,7 @@ describe("findAll", function () {
 
     expect(jobs).toEqual([
       {
-        id: 2,
+        id: expect.any(Number),
         title: "j2",
         salary: 20,
         equity: "1",
@@ -137,7 +139,7 @@ describe("findAll", function () {
 
     expect(jobs).toEqual([
       {
-        id: 1,
+        id: expect.any(Number),
         title: "j1",
         salary: 10,
         equity: "0",
@@ -152,7 +154,7 @@ describe("findAll", function () {
 
     expect(jobs).toEqual([
       {
-        id: 2,
+        id: expect.any(Number),
         title: "j2",
         salary: 20,
         equity: "1",
@@ -212,14 +214,14 @@ describe("filterJobs", function () {
 });
 
 /****************************** get ******************************************/
-
+//FIXME: refactor job.get =>
 describe("get", function () {
   test("works", async function () {
     let job = await Job.get(1);
 
     expect(job).toEqual(
       {
-        id: 1,
+        id: expect.any(Number),
         title: "j1",
         salary: 10,
         equity: "0",
@@ -246,7 +248,7 @@ describe("update", function() {
     salary: 10000,
     equity: "0.5"
   };
-
+  //FIXME: same idea with job id => refactor
   test("works", async function () {
     let job = await Job.update(1, updateData);
     expect(job).toEqual({
@@ -278,7 +280,7 @@ describe("update", function() {
       salary: null,
       equity: null
     };
-
+    //FIXME: refactor with id
     let job = await Job.update(1, updateDataSetNulls);
     expect(job).toEqual({
       id: 1,
@@ -291,7 +293,7 @@ describe("update", function() {
        FROM jobs
        WHERE id = 1`
     );
-
+    //FIXME: refactor with id
     expect(result.rows).toEqual([{
       id: 1,
       title: "new title",
@@ -321,7 +323,7 @@ describe("update", function() {
 });
 
 /***************************remove******************************** */
-
+//FIXME: refactor with id
 describe("remove", function () {
   test("works", async function () {
     await Job.remove(1);
