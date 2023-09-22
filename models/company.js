@@ -139,6 +139,25 @@ static filterCompanies(filters) {
    * Throws NotFoundError if not found.
    **/
 
+  /*
+  SELECT handle,
+        name,
+        description,
+        num_employees AS "numEmployees",
+        logo_url      AS "logoUrl"
+        id,
+        title,
+        equity,
+        company_handle AS "companyHandle"
+  FROM companies
+  JOIN jobs
+  ON handle = company_handle
+  WHERE handle = 1$
+
+  then map results to condense into object
+
+  */
+
   static async get(handle) {
     const companyRes = await db.query(`
         SELECT handle,

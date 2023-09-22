@@ -219,3 +219,173 @@ describe("GET /jobs/:id", function () {
 });
 
 /******************************* PATCH /jobs/:id ****************************/
+
+describe("PATCH /jobs/:id", function(){
+  test("works for admins", async function (){
+    const sampleRes = await db.query( `
+          SELECT id
+          FROM jobs
+          WHERE title = 'J1'
+          `);
+    const sampleId = sampleRes.rows[0].id;
+
+    const resp = await request(app)
+          .patch(`/jobs/${sampleId}`)
+          .send({
+            title: "New J1"
+          })
+          .set("authorization", `Bearer ${a1Token}`);
+
+    expect(resp.body).toEqual({
+      job: {
+        id: expect.any(Number),
+        title: 'New J1',
+        salary: 10,
+        equity: "0",
+        companyHandle: "c1"
+      }
+    });
+
+  })
+
+  test("unauth for non-admin users", async function () {
+    const sampleRes = await db.query( `
+          SELECT id
+          FROM jobs
+          WHERE title = 'J1'
+          `);
+    const sampleId = sampleRes.rows[0].id;
+
+    const resp = await request(app)
+          .patch(`/jobs/${sampleId}`)
+          .send({
+            title: "New J1"
+          })
+          .set("authorization", `Bearer ${u1Token}`);
+
+    expect(resp.statusCode).toEqual(401);
+    expect(resp.body).toEqual({
+      error: {
+        message: "Unauthorized",
+        status: 401}
+    });
+  })
+
+  test("unauth for anon", async function () {
+    const sampleRes = await db.query( `
+          SELECT id
+          FROM jobs
+          WHERE title = 'J1'
+          `);
+    const sampleId = sampleRes.rows[0].id;
+
+    const resp = await request(app)
+          .patch(`/jobs/${sampleId}`)
+          .send({
+            title: "New J1"
+          });
+    expect(resp.statusCode).toEqual(401);
+  });
+
+  test("not found for no such job", async function () {
+    const resp = await request(app)
+      .patch(`/jobs/10000`)
+      .send({
+        title: "New J1"
+      })
+      .set("authorization", `Bearer ${a1Token}`);
+    expect(resp.statusCode).toEqual(404);
+  });
+
+  test("bad request on companyHandle change", async function () {
+    const sampleRes = await db.query( `
+          SELECT id
+          FROM jobs
+          WHERE title = 'J1'
+          `);
+    const sampleId = sampleRes.rows[0].id;
+
+    const resp = await request(app)
+          .patch(`/jobs/${sampleId}`)
+          .send({
+            companyHandle: 'c3'
+          })
+          .set("authorization", `Bearer ${a1Token}`);
+
+    expect(resp.statusCode).toEqual(400);
+  });
+
+  test("bad request on invalid data", async function () {
+    const sampleRes = await db.query( `
+          SELECT id
+          FROM jobs
+          WHERE title = 'J1'
+          `);
+    const sampleId = sampleRes.rows[0].id;
+
+    const resp = await request(app)
+          .patch(`/jobs/${sampleId}`)
+          .send({
+            equity: 3
+          })
+          .set("authorization", `Bearer ${a1Token}`);
+
+    expect(resp.statusCode).toEqual(400);
+  });
+});
+
+/*************************** DELETE /jobs/:id *********************/
+
+describe("DELETE /jobs/:id", function () {
+  test("works for admins", async function (){
+    const sampleRes = await db.query( `
+          SELECT id
+          FROM jobs
+          WHERE title = 'J1'
+          `);
+    const sampleId = sampleRes.rows[0].id;
+
+    const resp = await request(app)
+          .delete(`/jobs/${sampleId}`)
+          .set("authorization", `Bearer ${a1Token}`);
+    expect(resp.body).toEqual({deleted: `${sampleId}`});
+  });
+
+  test("unauth for non-admin users", async function () {
+    const sampleRes = await db.query( `
+          SELECT id
+          FROM jobs
+          WHERE title = 'J1'
+          `);
+    const sampleId = sampleRes.rows[0].id;
+    const resp = await request(app)
+          .delete(`/jobs/${sampleId}`)
+          .set("authorization", `Bearer ${u1Token}`);
+    expect(resp.statusCode).toEqual(401);
+    expect(resp.body).toEqual({
+      "error": {
+        "message": "Unauthorized",
+         "status": 401
+        }
+    });
+  });
+
+  test("unauth for anon", async function () {
+    const sampleRes = await db.query( `
+          SELECT id
+          FROM jobs
+          WHERE title = 'J1'
+          `);
+    const sampleId = sampleRes.rows[0].id;
+    const resp = await request(app)
+          .delete(`/jobs/${sampleId}`);
+    expect(resp.statusCode).toEqual(401);
+  });
+
+  test("not found for no such job", async function () {
+    const resp = await request(app)
+      .delete(`/jobs/10000`)
+      .set("authorization", `Bearer ${a1Token}`);
+    expect(resp.statusCode).toEqual(404);
+  });
+});
