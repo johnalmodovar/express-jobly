@@ -73,21 +73,19 @@ class Job {
       const { title, minSalary, hasEquity } = filters;
       const { whereString, values } = Job.filterJobs(filters);
 
-      if (Object.keys(filters).length > 1 && !(hasEquity)){
-        const queryString = `
+      const queryString = `
         SELECT id,
                title,
                salary,
                equity,
                company_handle AS "companyHandle"
         FROM jobs
-        ${whereString}
+        WHERE ${whereString}
         ORDER BY title`;
 
-        const filteredRes = await db.query(queryString, [...values]);
+      const filteredRes = await db.query(queryString, [...values]);
 
-        return filteredRes.rows;
-      }
+      return filteredRes.rows;
 
     }
 
@@ -130,12 +128,16 @@ class Job {
       whereStringArray.push(`equity != 0`);
       idx++;
     }
+    if (!hasEquity) {
+      whereStringArray.push(`equity >= 0`);
+      idx++;
+    }
 
     let values = [title, minSalary];
-    let whereString = whereStringArray.join(` AND `);
+    //let whereString = whereStringArray.join(` AND `);
 
     return {
-      whereString: "WHERE " + whereString,
+      whereString: whereStringArray.join( ' AND '),
       values: values.filter(item => item !== undefined)
     };
   }
@@ -151,7 +153,7 @@ class Job {
       SELECT id,
              title,
              salary,
-             equity
+             equity,
              company_handle AS "companyHandle"
       FROM jobs
       WHERE id = $1`, [id]);

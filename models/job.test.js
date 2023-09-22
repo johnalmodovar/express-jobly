@@ -144,6 +144,13 @@ describe("findAll", function () {
         salary: 10,
         equity: "0",
         companyHandle: "c1"
+      },
+      {
+        id: expect.any(Number),
+        title: "j2",
+        salary: 20,
+        equity: "1",
+        companyHandle: "c2"
       }
     ]);
   });
@@ -187,7 +194,7 @@ describe("filterJobs", function () {
         whereString:
           `title ILIKE '%' || $1 || '%'`
           + ` AND salary >= $2`
-          + ` AND equity > 0`,
+          + ` AND equity != 0`,
         values: ["title", 10],
       }
     );
@@ -204,8 +211,9 @@ describe("filterJobs", function () {
     expect(sqlFilter).toEqual(
       {
         whereString:
-        `title ILIKE %' || $1 || '%'`
-        + ` AND salary >= $2`,
+        `title ILIKE '%' || $1 || '%'`
+        + ` AND salary >= $2`
+        + ` AND equity >= 0`,
         values: ["title", 10],
       }
     );
@@ -214,7 +222,7 @@ describe("filterJobs", function () {
 });
 
 /****************************** get ******************************************/
-//FIXME: refactor job.get =>
+
 describe("get", function () {
 
   test("works", async function () {
@@ -257,15 +265,30 @@ describe("update", function() {
     salary: 10000,
     equity: "0.5"
   };
+
+
   //FIXME: same idea with job id => refactor
   test("works", async function () {
-    let job = await Job.update(1, updateData);
-    expect(job).toEqual({
-      id: 1,
+    const sampleRes = await db.query( `
+          SELECT id
+          FROM jobs
+          WHERE title = 'j1'
+          `);
+
+    const sampleId = sampleRes.rows[0].id;
+
+    const job = await Job.get(sampleId);
+    const newJob = await Job.update(sampleId, updateData);
+
+    console.log("*****Job Is", job);
+    console.log("******NewJob is", newJob[0]);
+
+    expect(newJob).toEqual({
+      id: sampleId,
       title: "new title",
       salary: 10000,
       equity: "0.5",
-      companyHandle: "c1"
+      companyHandle: job.companyHandle
     });
 
     const result = await db.query(
@@ -273,14 +296,15 @@ describe("update", function() {
       FROM jobs
       WHERE id = 1`
     );
-    expect(result.rows).toEqual([
+    const rows = await result.rows;
+    expect(rows).toEqual([
       {id: 1,
       title: "new title",
       salary: 10000,
       equity: "0.5",
       company_handle: "c1"
-    }
-    ]);
+    }]
+    );
   })
 
   test("works: null fields", async function () {
