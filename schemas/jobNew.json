@@ -27,6 +27,6 @@
     "additionalProperties": false,
     "required": [
       "title",
-      "comapnyHandle"
+      "companyHandle"
     ]
   }

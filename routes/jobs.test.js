@@ -26,7 +26,7 @@ describe("POST /jobs", function () {
     title: "new",
     salary: 10,
     equity: 0,
-    companyHandle: "c1", //TODO: this is failing
+    companyHandle: "c1"
   };
 
   test("ok for admins", async function () {
@@ -34,9 +34,15 @@ describe("POST /jobs", function () {
         .post("/jobs")
         .send(newJob)
         .set("authorization", `Bearer ${a1Token}`);
-    // expect(resp.statusCode).toEqual(201);
+    expect(resp.statusCode).toEqual(201);
     expect(resp.body).toEqual({
-      job: newJob,
+      job: {
+        id: expect.any(Number),
+        title: "new",
+        salary: 10,
+        equity: "0",
+        companyHandle: "c1"
+      }
     });
   });
 
@@ -59,7 +65,7 @@ describe("POST /jobs", function () {
         .send({
           title: "new",
           salary: 10,
-          equity: "0",
+          equity: 0,
         })
         .set("authorization", `Bearer ${a1Token}`);
     expect(resp.statusCode).toEqual(400);
