@@ -266,8 +266,6 @@ describe("update", function() {
     equity: "0.5"
   };
 
-
-  //FIXME: same idea with job id => refactor
   test("works", async function () {
     const sampleRes = await db.query( `
           SELECT id
@@ -276,36 +274,36 @@ describe("update", function() {
           `);
 
     const sampleId = sampleRes.rows[0].id;
+    let job = await Job.update(sampleId, updateData);
 
-    const job = await Job.get(sampleId);
-    const newJob = await Job.update(sampleId, updateData);
-
-    console.log("*****Job Is", job);
-    console.log("******NewJob is", newJob[0]);
-
-    expect(newJob).toEqual({
-      id: sampleId,
-      title: "new title",
-      salary: 10000,
-      equity: "0.5",
-      companyHandle: job.companyHandle
-    });
+    expect(job).toEqual(
+      {
+        id: expect.any(Number),
+        title: "new title",
+        salary: 10000,
+        equity: "0.5",
+        companyHandle: "c1"
+      }
+    );
 
     const result = await db.query(
-      `SELECT id, title, salary, equity, company_handle
-      FROM jobs
-      WHERE id = 1`
+          `SELECT id, title, salary, equity, company_handle
+           FROM jobs
+           WHERE id = $1`,
+           [sampleId]
     );
-    const rows = await result.rows;
-    expect(rows).toEqual([
-      {id: 1,
-      title: "new title",
-      salary: 10000,
-      equity: "0.5",
-      company_handle: "c1"
-    }]
-    );
-  })
+
+    expect(result.rows).toEqual([
+      {
+        id: expect.any(Number),
+        title: "new title",
+        salary: 10000,
+        equity: "0.5",
+        company_handle: "c1"
+      }
+    ]);
+
+  });
 
   test("works: null fields", async function () {
     const updateDataSetNulls = {
@@ -313,10 +311,18 @@ describe("update", function() {
       salary: null,
       equity: null
     };
-    //FIXME: refactor with id
-    let job = await Job.update(1, updateDataSetNulls);
+
+    const sampleRes = await db.query( `
+          SELECT id
+          FROM jobs
+          WHERE title = 'j1'
+          `);
+
+    const sampleId = sampleRes.rows[0].id;
+    let job = await Job.update(sampleId, updateDataSetNulls);
+
     expect(job).toEqual({
-      id: 1,
+      id: expect.any(Number),
       ...updateDataSetNulls,
       companyHandle: "c1"
     });
@@ -324,11 +330,12 @@ describe("update", function() {
     const result = await db.query(
       `SELECT id, title, salary, equity, company_handle
        FROM jobs
-       WHERE id = 1`
+       WHERE id = $1`,
+       [sampleId]
     );
-    //FIXME: refactor with id
+
     expect(result.rows).toEqual([{
-      id: 1,
+      id: expect.any(Number),
       title: "new title",
       salary: null,
       equity: null,
@@ -356,12 +363,22 @@ describe("update", function() {
 });
 
 /***************************remove******************************** */
-//FIXME: refactor with id
+
 describe("remove", function () {
   test("works", async function () {
-    await Job.remove(1);
+    const sampleRes = await db.query( `
+          SELECT id
+          FROM jobs
+          WHERE title = 'j1'
+          `);
+
+    const sampleId = sampleRes.rows[0].id;
+
+    await Job.remove(sampleId);
+
     const res = await db.query(
-      `SELECT id FROM jobs WHERE id=1`
+      `SELECT id FROM jobs WHERE id=$1`,
+      [sampleId]
     );
     expect(res.rows.length).toEqual(0);
   });
