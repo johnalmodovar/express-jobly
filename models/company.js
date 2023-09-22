@@ -164,36 +164,51 @@ static filterCompanies(filters) {
              name,
              description,
              num_employees AS "numEmployees",
-             logo_url      AS "logoUrl",
-             id,
-             title,
-             equity,
-             company_handle AS "companyHandle"
+             logo_url      AS "logoUrl"
       FROM companies
-      JOIN jobs ON company_handle = $1
-      WHERE handle = company_handle`,
+      WHERE handle = $1`,
     [handle]
     );
 
-    // const company = companyRes.rows;
-
-    const company = companyRes.rows.map(({
-      handle,
-      name,
-      description,
-      num_employees,
-      logo_url,
-      id,
-      title,
-      equity,
-      company_handle
-    }) => {
-        let company = { handle, name, description, num_employees, logo_url };
-        company["job"] = { id, title, equity, company_handle };
-        return company;
-    });
+    let company = companyRes.rows[0]
 
     if (!company) throw new NotFoundError(`No company: ${handle}`);
+
+    const jobRes = await db.query(`
+      SELECT id,
+             title
+             salary,
+             equity
+      FROM jobs
+      WHERE company_handle = $1`,
+      [company.handle]);
+
+    const jobArray = jobRes.rows;
+
+    company.jobs = jobArray;
+
+
+
+
+
+    //const company = companyRes.rows;
+
+    // const company = companyRes.rows.map(({
+    //   handle,
+    //   name,
+    //   description,
+    //   num_employees,
+    //   logo_url,
+    //   id,
+    //   title,
+    //   equity,
+    //   company_handle
+    // }) => {
+    //     let company = { handle, name, description, num_employees, logo_url };
+    //     company["job"] = { id, title, equity, company_handle };
+    //     return company;
+    // });
+
 
     return company;
   }
