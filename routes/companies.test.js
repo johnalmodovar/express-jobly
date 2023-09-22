@@ -189,7 +189,6 @@ describe("GET /companies", function () {
             maxEmployees: 1
         });
 
-        //TODO: test resp.body as a whole
     expect(resp.status).toEqual(400);
     expect(resp.body.error.message)
                   .toEqual("minEmployees cannot be greater than maxEmployees");

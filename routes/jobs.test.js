@@ -84,3 +84,138 @@ describe("POST /jobs", function () {
     expect(resp.statusCode).toEqual(400);
   });
 });
+
+/************************* GET /jobs *****************************************/
+
+describe("GET /jobs", function () {
+  test("ok for anon", async function () {
+    const resp = await request(app).get("/jobs");
+    expect(resp.body).toEqual({
+      jobs:
+          [
+            {
+              id: expect.any(Number),
+              title: "J1",
+              salary: 10,
+              equity: "0",
+              companyHandle: "c1",
+            },
+            {
+              id: expect.any(Number),
+              title: "J2",
+              salary: 20,
+              equity: "0",
+              companyHandle: "c2",
+            },
+            {
+              id: expect.any(Number),
+              title: "J3",
+              salary: 30,
+              equity: "1",
+              companyHandle: "c3",
+            },
+          ],
+    });
+  });
+
+  test("with title filter", async function () {
+    const resp = await request(app)
+        .get("/jobs")
+        .query({ title: "J1" });
+
+    expect(resp.body).toEqual({
+      jobs: [{
+        id: expect.any(Number),
+        title: "J1",
+        salary: 10,
+        equity: "0",
+        companyHandle: "c1",
+      }]
+    });
+  });
+
+  test("with minSalary filter", async function () {
+    const resp = await request(app)
+        .get("/jobs")
+        .query({ minSalary: 30 });
+
+    expect(resp.body).toEqual({
+      jobs: [{
+        id: expect.any(Number),
+        title: "J3",
+        salary: 30,
+        equity: "1",
+        companyHandle: "c3",
+      }]
+    });
+  });
+
+  test("with minSalary having an invalid integer", async function () {
+    const resp = await request(app)
+        .get("/jobs")
+        .query({ minEmployees: "hi" });
+
+    expect(resp.status).toEqual(400);
+  });
+
+  test("having multiple filter criteria", async function () {
+    const resp = await request(app)
+        .get("/jobs")
+        .query({
+            title: "j",
+            minSalary: 20
+        });
+
+    expect(resp.body).toEqual({
+      jobs: [
+      {
+        id: expect.any(Number),
+        title: "J2",
+        salary: 20,
+        equity: "0",
+        companyHandle: "c2",
+      },
+      {
+        id: expect.any(Number),
+        title: "J3",
+        salary: 30,
+        equity: "1",
+        companyHandle: "c3",
+      }]
+    });
+  });
+});
+
+/*************************** GET /jobs/:id **********************************/
+
+describe("GET /jobs/:id", function () {
+  test("works for anon", async function () {
+    const sampleRes = await db.query( `
+          SELECT id
+          FROM jobs
+          WHERE title = 'J1'
+          `);
+    const sampleId = sampleRes.rows[0].id;
+
+    const resp = await request(app).get(`/jobs/${sampleId}`);
+    expect(resp.body).toEqual({
+      job: {
+        id: expect.any(Number),
+        title: "J1",
+        salary: 10,
+        equity: "0",
+        companyHandle: "c1",
+      },
+    });
+  });
+
+  //TODO: might make a test for a job without a job description?
+
+  test("not found for no such job", async function () {
+    const resp = await request(app).get(`/jobs/78`);
+    expect(resp.statusCode).toEqual(404);
+  });
+
+});
+
+/******************************* PATCH /jobs/:id ****************************/
