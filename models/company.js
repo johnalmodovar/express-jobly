@@ -160,15 +160,38 @@ static filterCompanies(filters) {
 
   static async get(handle) {
     const companyRes = await db.query(`
-        SELECT handle,
-               name,
-               description,
-               num_employees AS "numEmployees",
-               logo_url      AS "logoUrl"
-        FROM companies
-        WHERE handle = $1`, [handle]);
+      SELECT handle,
+             name,
+             description,
+             num_employees AS "numEmployees",
+             logo_url      AS "logoUrl",
+             id,
+             title,
+             equity,
+             company_handle AS "companyHandle"
+      FROM companies
+      JOIN jobs ON company_handle = $1
+      WHERE handle = company_handle`,
+    [handle]
+    );
 
-    const company = companyRes.rows[0];
+    // const company = companyRes.rows;
+
+    const company = companyRes.rows.map(({
+      handle,
+      name,
+      description,
+      num_employees,
+      logo_url,
+      id,
+      title,
+      equity,
+      company_handle
+    }) => {
+        let company = { handle, name, description, num_employees, logo_url };
+        company["job"] = { id, title, equity, company_handle };
+        return company;
+    });
 
     if (!company) throw new NotFoundError(`No company: ${handle}`);
 
